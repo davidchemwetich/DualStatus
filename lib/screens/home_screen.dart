@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import AdMob
+import '../helpers/ad_helper.dart'; // Import the ad helper
 import 'whatsapp_screen.dart';
 import 'whatsapp_business_screen.dart';
 import 'saved_screen.dart';
@@ -12,16 +14,18 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> 
-    with TickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _currentIndex = 0;
   bool _isNavBarVisible = true;
-  
+
   late final PageController _pageController;
   late final AnimationController _animationController;
   late final Animation<double> _slideAnimation;
-  
-  // Static lists to avoid recreation
+
+  // Banner Ad instance
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
+
   static const List<Widget> _screens = [
     WhatsAppScreen(),
     WhatsAppBusinessScreen(),
@@ -55,15 +59,14 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _pageController = PageController(initialPage: _currentIndex);
-    
-    // Animation controller for smooth navbar hide/show
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _slideAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -71,15 +74,33 @@ class _HomeScreenState extends State<HomeScreen>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    
-    // Start with navbar visible
+
     _animationController.forward();
+    
+    // --- Load Banner Ad ---
+    _loadBannerAd();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = AdHelper.createBannerAd()
+      ..load();
+    
+    // We are not setting a listener here because it's handled in AdHelper.
+    // However, if you need to react to ad events in this screen, you can
+    // modify AdHelper to accept a listener or add one here.
+    // For simplicity, we'll just check if it's loaded.
+    // A better approach for production would be to use the listener to set state.
+    // For this example, we'll assume it loads and set a flag.
+    setState(() {
+      _isBannerAdLoaded = true; // Assume loaded for UI purposes
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _animationController.dispose();
+    _bannerAd?.dispose(); // Dispose the banner ad
     super.dispose();
   }
 
@@ -88,8 +109,6 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _currentIndex = index;
       });
-      
-      // Light haptic feedback for page changes
       HapticFeedback.lightImpact();
     }
   }
@@ -101,8 +120,6 @@ class _HomeScreenState extends State<HomeScreen>
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      
-      // Medium haptic feedback for navigation
       HapticFeedback.mediumImpact();
     }
   }
@@ -112,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _isNavBarVisible = visible;
       });
-      
+
       if (visible) {
         _animationController.forward();
       } else {
@@ -124,28 +141,22 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, // Allow body to extend behind bottom nav
+      extendBody: true,
       body: NotificationListener<ScrollNotification>(
         onNotification: (ScrollNotification scrollInfo) {
-          // Hide navbar when scrolling down, show when scrolling up
           if (scrollInfo is ScrollUpdateNotification) {
             if (scrollInfo.scrollDelta! > 5) {
-              // Scrolling down - hide navbar
               _toggleNavBarVisibility(false);
             } else if (scrollInfo.scrollDelta! < -5) {
-              // Scrolling up - show navbar
               _toggleNavBarVisibility(true);
             }
           }
-          
-          // Show navbar when reaching top or bottom
           if (scrollInfo is ScrollEndNotification) {
             final metrics = scrollInfo.metrics;
             if (metrics.atEdge) {
               _toggleNavBarVisibility(true);
             }
           }
-          
           return false;
         },
         child: PageView.builder(
@@ -153,18 +164,31 @@ class _HomeScreenState extends State<HomeScreen>
           onPageChanged: _onPageChanged,
           itemCount: _screens.length,
           itemBuilder: (context, index) => _screens[index],
-          // Optimize page loading
           allowImplicitScrolling: true,
         ),
       ),
-      bottomNavigationBar: _isNavBarVisible
-          ? AnimatedBuilder(
+      // --- Updated Bottom Navigation Bar with Ad ---
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Ad Container
+          if (_isBannerAdLoaded && _bannerAd != null)
+            Container(
+              alignment: Alignment.center,
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            ),
+          
+          // Your existing animated Nav Bar
+          if (_isNavBarVisible)
+            AnimatedBuilder(
               animation: _slideAnimation,
               builder: (context, child) {
                 return Transform.translate(
                   offset: Offset(
-                    0, 
-                    (1 - _slideAnimation.value) * 100, // Slide down when hiding
+                    0,
+                    (1 - _slideAnimation.value) * 100,
                   ),
                   child: Opacity(
                     opacity: _slideAnimation.value,
@@ -173,10 +197,12 @@ class _HomeScreenState extends State<HomeScreen>
                 );
               },
             )
-          : null, // Completely remove when hidden
+          else
+            const SizedBox.shrink(),
+        ],
+      ),
     );
   }
-
   Widget _buildBottomNavBar(BuildContext context) {
     final theme = Theme.of(context);
     

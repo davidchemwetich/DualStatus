@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:status/widgets/privacy_policy_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,9 +19,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   
   // App configuration - Replace with your actual URLs
   static const String _appPackageId = 'ink.netops.status';
-  static const String _privacyPolicyUrl = 'https://netops.ink';
+  static const String _privacyPolicyUrl = 'https://netops.ink/privacy-policy'; // Update this
   static const String _playStoreUrl = 'https://play.google.com/store/apps/details?id=$_appPackageId';
-  static const String _appStoreUrl = 'https://apps.apple.com/app/id123456789'; // Add your App Store ID
+  static const String _appStoreUrl = 'https://apps.apple.com/app/id123456789';
   
   String _appVersion = _fallbackVersion;
   String _appName = 'Status Saver';
@@ -78,8 +80,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
+        backgroundColor: _primaryColor,
         action: SnackBarAction(
           label: 'OK',
+          textColor: Colors.white,
           onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
         ),
       ),
@@ -108,12 +112,20 @@ Download now:
   }
 
   Future<void> _rateApp() async {
-    // Detect platform and use appropriate store URL
     const String androidUrl = _playStoreUrl;
     const String iosUrl = _appStoreUrl;
     
-    // Try Android first, then iOS as fallback
     await _launchURL(androidUrl, fallbackUrl: iosUrl);
+  }
+
+  // Modified privacy policy method to navigate to WebView page
+  void _openPrivacyPolicy() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PrivacyPolicyPage(),
+      ),
+    );
   }
 
   void _showAboutDialog() {
@@ -146,6 +158,14 @@ Download now:
                    '• Easy-to-use interface\n'
                    '• No root required\n'
                    '• Fast and secure'),
+        const SizedBox(height: 16),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            _openPrivacyPolicy();
+          },
+          child: const Text('View Privacy Policy'),
+        ),
       ],
     );
   }
@@ -216,7 +236,8 @@ Download now:
                 _SettingsTile(
                   icon: Icons.privacy_tip_outlined,
                   title: 'Privacy Policy',
-                  onTap: () => _launchURL(_privacyPolicyUrl),
+                  subtitle: 'View our privacy policy',
+                  onTap: _openPrivacyPolicy, // Changed this line
                 ),
                 
                 const Divider(height: 32),

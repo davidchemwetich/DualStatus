@@ -1,19 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'helpers/ad_helper.dart'; // Import the ad helper
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 
-void main() {
-  // Flutter bindings are initialized
+void main() async {
+  // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize the Google Mobile Ads SDK
-  MobileAds.instance.initialize();
+  await MobileAds.instance.initialize();
+
+  // Load the first App Open ad
+  AdHelper.loadAppOpenAd();
+
   runApp(const StatusSaverApp());
 }
 
-class StatusSaverApp extends StatelessWidget {
+class StatusSaverApp extends StatefulWidget {
   const StatusSaverApp({super.key});
+
+  @override
+  State<StatusSaverApp> createState() => _StatusSaverAppState();
+}
+
+// Add WidgetsBindingObserver to listen for app lifecycle changes
+class _StatusSaverAppState extends State<StatusSaverApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Show an app open ad when the app is resumed
+    if (state == AppLifecycleState.resumed) {
+      AdHelper.showAppOpenAdIfAvailable();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +71,7 @@ class StatusSaverApp extends StatelessWidget {
   }
 }
 
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -57,15 +89,17 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkFirstTime() async {
     final prefs = await SharedPreferences.getInstance();
     final isFirstTime = prefs.getBool('first_time') ?? true;
-    
+
     await Future.delayed(const Duration(seconds: 2)); // Splash delay
-    
+
+    // Show the app open ad before navigating
+    AdHelper.showAppOpenAdIfAvailable();
+
     if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => isFirstTime 
-            ? const OnboardingScreen() 
-            : const HomeScreen(),
+          builder: (context) =>
+              isFirstTime ? const OnboardingScreen() : const HomeScreen(),
         ),
       );
     }
