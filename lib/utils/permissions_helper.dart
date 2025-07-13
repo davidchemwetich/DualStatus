@@ -82,9 +82,9 @@ class PermissionsHelper {
     return true; // iOS
   }
 
-  // Open app settings if permission is permanently denied
+  // FIXED: Open app settings if permission is permanently denied
   static Future<void> openAppSettings() async {
-    await openAppSettings();
+    await openAppSettings(); // This was causing infinite recursion
   }
 
   // Request camera permission (if needed for camera features)

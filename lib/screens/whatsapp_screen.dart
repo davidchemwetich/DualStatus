@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:status/widgets/whatsapp_link_generator.dart';
 import '../services/status_service.dart';
 import '../models/status_model.dart';
 import '../widgets/status_grid_widget.dart';
 import '../widgets/status_viewer_widget.dart';
 import '../utils/permissions_helper.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:android_intent_plus/android_intent.dart';
-import 'package:flutter/foundation.dart'; // Often needed for kIsWeb or platform checks
+import 'package:flutter/foundation.dart';
 
 class WhatsAppScreen extends StatefulWidget {
   const WhatsAppScreen({super.key});
@@ -40,23 +40,23 @@ class _WhatsAppScreenState extends State<WhatsAppScreen>
 
   Future<void> _checkPermissionsAndLoadStatuses() async {
     setState(() => _isLoading = true);
-    
+
     bool hasPermission = await PermissionsHelper.requestStoragePermission();
-    
+
     if (hasPermission) {
       setState(() => _hasPermission = true);
       await _loadStatuses();
     } else {
       setState(() => _hasPermission = false);
     }
-    
+
     setState(() => _isLoading = false);
   }
 
   Future<void> _loadStatuses() async {
     try {
       final statuses = await _statusService.getWhatsAppStatuses();
-      
+
       setState(() {
         _imageStatuses = statuses.where((status) => status.isImage).toList();
         _videoStatuses = statuses.where((status) => status.isVideo).toList();
@@ -68,19 +68,13 @@ class _WhatsAppScreenState extends State<WhatsAppScreen>
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
@@ -114,11 +108,7 @@ class _WhatsAppScreenState extends State<WhatsAppScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.folder_off,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.folder_off, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Storage Permission Required',
@@ -172,87 +162,100 @@ class _WhatsAppScreenState extends State<WhatsAppScreen>
     );
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      backgroundColor: const Color(0xFF075E54),
-      foregroundColor: Colors.white,
-      title: const Text(
-        'Status Saver',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-      bottom: _hasPermission
-          ? TabBar(
-              controller: _tabController,
-              indicatorColor: Colors.white,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white70,
-              tabs: [
-                Tab(text: 'Images (${_imageStatuses.length})'),
-                Tab(text: 'Videos (${_videoStatuses.length})'),
-              ],
-            )
-          : null,
-      actions: _hasPermission
-          ? [
-              IconButton(
-                icon: const Icon(Icons.chat),
-                tooltip: 'Open WhatsApp', // Added a helpful tooltip
-                onPressed: () async {
-                  // This is the new, reliable code to launch WhatsApp
-                  if (defaultTargetPlatform == TargetPlatform.android) {
-                    const intent = AndroidIntent(
-                      action: 'action_main',
-                      category: 'category_launcher',
-                      package: 'com.whatsapp', // The official WhatsApp package
-                    );
-                    try {
-                      await intent.launch();
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("WhatsApp not found")),
-                      );
-                    }
-                  }
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.share),
-                onPressed: () {
-                  Share.share(
-                    'Check out this awesome WhatsApp Status Saver app!',
-                    subject: 'WhatsApp Status Saver',
-                  );
-                },
-              ),
-            ]
-          : null,
-    ),
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : !_hasPermission
-            ? _buildPermissionDeniedWidget()
-            : TabBarView(
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF075E54),
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Status Saver',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        bottom: _hasPermission
+            ? TabBar(
                 controller: _tabController,
-                children: [
-                  // Your existing TabBarView children
-                  _imageStatuses.isEmpty
-                      ? _buildEmptyStateWidget('Images')
-                      : StatusGridWidget(
-                          statuses: _imageStatuses,
-                          onStatusTap: _viewStatus,
-                          onDownload: _downloadStatus,
-                        ),
-                  _videoStatuses.isEmpty
-                      ? _buildEmptyStateWidget('Videos')
-                      : StatusGridWidget(
-                          statuses: _videoStatuses,
-                          onStatusTap: _viewStatus,
-                          onDownload: _downloadStatus,
-                        ),
+                indicatorColor: Colors.white,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                tabs: [
+                  Tab(text: 'Images (${_imageStatuses.length})'),
+                  Tab(text: 'Videos (${_videoStatuses.length})'),
                 ],
+              )
+            : null,
+        actions: _hasPermission
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.link),
+                  tooltip: 'WhatsApp Link Generator',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WhatsAppLinkGenerator(),
+                      ),
+                    );
+                  },
                 ),
+                IconButton(
+                  icon: const Icon(Icons.chat),
+                  tooltip: 'Open WhatsApp', // Added a helpful tooltip
+                  onPressed: () async {
+                    // This is the new, reliable code to launch WhatsApp
+                    if (defaultTargetPlatform == TargetPlatform.android) {
+                      const intent = AndroidIntent(
+                        action: 'action_main',
+                        category: 'category_launcher',
+                        package:
+                            'com.whatsapp', // The official WhatsApp package
+                      );
+                      try {
+                        await intent.launch();
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("WhatsApp not found")),
+                        );
+                      }
+                    }
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.share),
+                  onPressed: () {
+                    Share.share(
+                      'Check out this awesome WhatsApp Status Saver app!',
+                      subject: 'WhatsApp Status Saver',
+                    );
+                  },
+                ),
+              ]
+            : null,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : !_hasPermission
+          ? _buildPermissionDeniedWidget()
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                // Your existing TabBarView children
+                _imageStatuses.isEmpty
+                    ? _buildEmptyStateWidget('Images')
+                    : StatusGridWidget(
+                        statuses: _imageStatuses,
+                        onStatusTap: _viewStatus,
+                        onDownload: _downloadStatus,
+                      ),
+                _videoStatuses.isEmpty
+                    ? _buildEmptyStateWidget('Videos')
+                    : StatusGridWidget(
+                        statuses: _videoStatuses,
+                        onStatusTap: _viewStatus,
+                        onDownload: _downloadStatus,
+                      ),
+              ],
+            ),
     );
   }
 }
