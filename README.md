@@ -42,7 +42,7 @@ To get a local copy up and running, follow these simple steps.
 
 1.  **Clone the repo**
     ```sh
-    git clone [https://github.com/your_username/dualstatus-pro.git](https://github.com/your_username/dualstatus-pro.git)
+    git clone [https://github.com/davidchemwetich/DualStatus.git.git](https://github.com/davidchemwetich/DualStatus.git.git)
     ```
 2.  **Navigate to the project directory**
     ```sh
@@ -107,6 +107,6 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📧 Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_twitter) - email@example.com
+Your Name - [@your_twitter](https://twitter.com/bynetops) - info@bynetops.ink
 
-Project Link: [https://github.com/your_username/dualstatus-pro](https://github.com/your_username/dualstatus-pro)
+Project Link: [https://github.com/davidchemwetich/DualStatus.git](https://github.com/davidchemwetich/DualStatus.git)
