@@ -27,7 +27,7 @@ DualStatus Pro is a full-featured status saver application for Android, built wi
 
 | WhatsApp Statuses | Saved Gallery | Settings |
 | :---: |:---:|:---:|
-| <img src="https://placehold.co/300x600/FFFFFF/000000?text=WhatsApp+Screen" width="250"> | <img src="https://placehold.co/300x600/FFFFFF/000000?text=Saved+Screen" width="250"> | <img src="https://placehold.co/300x600/FFFFFF/000000?text=Settings+Screen" width="250"> |
+| <img src="https://ibb.co/svVVTb5Y" width="250"> | <img src="https://ibb.co/KxhKjLtY" width="250"> | <img src="https://ibb.co/6JX8qH63" width="250"> |
 
 ## 🚀 Getting Started
 
